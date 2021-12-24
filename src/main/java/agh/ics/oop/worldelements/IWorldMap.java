@@ -30,6 +30,8 @@ public interface IWorldMap {
 
     void removeGrass(Vector2d position);
 
+//    int getNumOfAnimals();
+
     int getNumOfGrasses();
 
 

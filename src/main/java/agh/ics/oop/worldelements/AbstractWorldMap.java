@@ -13,7 +13,6 @@ abstract class AbstractWorldMap implements IWorldMap,IPositionChangedObserver{
     protected int height;
     protected Vector2d lowerLeft;
     protected Vector2d upperRight;
-    protected int magicRefills = 0;
 
 
     Comparator<Animal> compareByEnergy = new Comparator<Animal>() {
@@ -124,14 +123,14 @@ abstract class AbstractWorldMap implements IWorldMap,IPositionChangedObserver{
         grasses.remove(position);
     }
 
-//    public int getNumOfAnimals(){
-//        int sum = 0;
-//        for (int x = 0; x < width; x++)
-//            for (int y = 0; y < height; y++){
-//                sum = sum + animals.get(new Vector2d(x,y)).size();
-//            }
-//        return sum;
-//    }
+    public int getNumOfAnimals(){
+        int sum = 0;
+        for (int x = 0; x < width; x++)
+            for (int y = 0; y < height; y++){
+                sum = sum + animals.get(new Vector2d(x,y)).size();
+            }
+        return sum;
+    }
 
     public int getNumOfGrasses(){
         return grasses.size();

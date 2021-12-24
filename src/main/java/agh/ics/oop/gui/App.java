@@ -17,6 +17,7 @@ import javafx.scene.layout.*;
 import javafx.stage.Stage;
 
 import java.io.FileNotFoundException;
+import java.util.Objects;
 
 public class App extends Application {
 
@@ -167,22 +168,39 @@ public class App extends Application {
             IWorldMap periodicmap = new PeriodicBoundaryMap(width, height);
             mapVisual(mapwithwall,mapWithWall);
             mapVisual(periodicmap,periodicMap);
-            //tu powinien byc if magic
-            IEngine leftEngine = new EvolutionEngine(mapwithwall, this,mapWithWall, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber);
-            IEngine rightEngine = new EvolutionEngine(periodicmap, this,periodicMap, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber);
 
+            boolean isLeftMapMagic = (Objects.equals(leftMapIsMagic, "Y"));
+            boolean isRightMapMagic = (Objects.equals(rightMapIsMagic, "Y"));
+
+            IEngine leftEngine = new EvolutionEngine(isLeftMapMagic,mapwithwall, this,mapWithWall, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber);
+            IEngine rightEngine = new EvolutionEngine(isRightMapMagic,periodicmap, this,periodicMap, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber);
+
+
+//            IEngine leftEngine;
+//            IEngine rightEngine;
+//            if (leftMapIsMagic == "N") {
+//                leftEngine = new EvolutionEngine(mapwithwall, this,mapWithWall, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber);
+//            } else {
+//                leftEngine = new MagicEvolutionEngine(mapwithwall, this,mapWithWall, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber);
+//            }
+//            if (rightMapIsMagic == "N") {
+//                rightEngine = new EvolutionEngine(periodicmap, this,periodicMap, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber);
+//            }
+//            else {
+//                rightEngine = new MagicEvolutionEngine(periodicmap, this,periodicMap, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber);
+//            }
 
                 Thread leftEngineThread = new Thread((Runnable) leftEngine);
                 leftEngineThread.start();
                 startstop.setOnAction((event2) -> {
-                    ((EvolutionEngine) leftEngine).switchPausing();
+                    leftEngine.switchPausing();
                 });
 
 
                 Thread rightEngineThread = new Thread((Runnable) rightEngine);
                 rightEngineThread.start();
                 startstop2.setOnAction((event2) -> {
-                    ((EvolutionEngine) rightEngine).switchPausing();
+                    rightEngine.switchPausing();
                 });
 
             VBox leftMap = new VBox(mapWithWall,startstop,statAndPlot);
@@ -192,8 +210,6 @@ public class App extends Application {
 
             HBox box = new HBox(leftMap,rightMap);
 
-
-            System.out.println(mapwithwall.getWidth());
             animation = new Scene(box, mapwithwall.getWidth()*40+40, periodicmap.getHeight()*20+300);
 
             window.setScene(animation);
