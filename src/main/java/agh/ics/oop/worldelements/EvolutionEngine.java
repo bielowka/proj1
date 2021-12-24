@@ -90,8 +90,6 @@ public class EvolutionEngine implements IEngine,Runnable{
         int i=0;
         boolean animalsLeft = true;
         while(animalsLeft) {
-//            System.out.println(this.numOfAnimals());
-//            System.out.println(pausing);
             i++;
             try {
                 Thread.sleep(moveDelay/2);
@@ -115,9 +113,8 @@ public class EvolutionEngine implements IEngine,Runnable{
                 }
             }
 
-            if (this.numOfAnimals() < 0) animalsLeft = false;
+            if (this.numOfAnimals() <= 0) animalsLeft = false;
         }
-//        System.out.println("!!!!!!!!!!!!!!WYWALILO!!!!!!!!!!!!!!!!!!!1");
     }
 
     public void switchPausing(){

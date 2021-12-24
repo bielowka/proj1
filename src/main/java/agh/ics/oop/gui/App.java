@@ -117,7 +117,7 @@ public class App extends Application {
         TextField moveEnergyTxtField = new TextField("5");
 
         Label plantEnergyLabel = new Label("Plant energy:");
-        TextField plantEnergyTxtField = new TextField("30");
+        TextField plantEnergyTxtField = new TextField("100");
 
         Label jungleRatioLabel = new Label("Jungle ratio (_ times smaller):");
         TextField jungleRatioTxtField = new TextField("4");
@@ -129,10 +129,10 @@ public class App extends Application {
         TextField rightMapIsMagicTxtField = new TextField("N");
 
         Label initialNumOfAnimalsLabel = new Label("Initial number of animals:");
-        TextField initialNumOfAnimalsField = new TextField("20");
+        TextField initialNumOfAnimalsField = new TextField("50");
 
         Label moveDelayLabel = new Label("Move delay:");
-        TextField moveDelayField = new TextField("300");
+        TextField moveDelayField = new TextField("100");
 
 
         VBox leftLabels = new VBox(widthLabel, startEnergyLabel, plantEnergyLabel, leftMapIsMagicLabel, moveDelayLabel);
