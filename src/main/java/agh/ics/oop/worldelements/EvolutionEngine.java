@@ -45,6 +45,7 @@ public class EvolutionEngine implements IEngine,Runnable{
     Label deathDay;
 
     private Animal trackedAnimal;
+    private ArrayList<Animal> trackedAnimalDescendants;
 
     protected List<Animal> animals = new ArrayList<Animal>();
 
@@ -308,6 +309,12 @@ public class EvolutionEngine implements IEngine,Runnable{
             Animal kid = new Animal(new Vector2d(x,y),parent1,parent2,map,days);
             map.place(kid);
             this.animals.add(kid);
+
+            if (trackedAnimalDescendants != null || tracked) {
+                if (trackedAnimalDescendants.contains(parent1) || trackedAnimalDescendants.contains(parent2)) {
+                    trackedAnimalDescendants.add(kid);
+                }
+            }
         }
     }
 
@@ -374,5 +381,15 @@ public class EvolutionEngine implements IEngine,Runnable{
 
     public int getStartEnergy() {
         return startEnergy;
+    }
+
+    public int numOfDescendants(){
+        if (trackedAnimal != null && trackedAnimalDescendants != null) return trackedAnimalDescendants.size() - 1;
+        return 0;
+    }
+
+    public void setTrackedAnimalDescendants() {
+        trackedAnimalDescendants = new ArrayList<Animal>();
+        trackedAnimalDescendants.add(trackedAnimal);
     }
 }

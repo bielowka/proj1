@@ -75,7 +75,7 @@ public class App extends Application {
     public void trackedAnimalVisual(Animal animal,EvolutionEngine engine,IWorldMap map,Label trackedGenome,Label trackedOffspring, Label trackedDescendants, Label deathDay){
         trackedGenome.setText("Genome:" + (animal.getGenome().toString().replace(",", "").replace(" ","")));
         trackedOffspring.setText("Kids: " + String.valueOf(animal.getOffspringNum()));
-        //descendands
+        trackedDescendants.setText("Descendants: " + String.valueOf(engine.numOfDescendants()));
         if (animal.getEnergy() <= 0){
             deathDay.setText("Dead on: " + String.valueOf(engine.days) + " day");
             engine.setTracking();
@@ -172,6 +172,7 @@ public class App extends Application {
                             engine.setTrackedAnimal((Animal) map.objectAt(new Vector2d(posX,posY)));
                             engine.getTrackedAnimal().setOffspringNum(0);
                             engine.setTracking();
+                            engine.setTrackedAnimalDescendants();
                         }
                     });
 
