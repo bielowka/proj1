@@ -25,19 +25,30 @@ public class EvolutionEngine implements IEngine,Runnable{
     protected int jungleRatio;
     protected int initAnimalsNumber;
     public boolean pausing = false;
+    public boolean tracked = false;
     public boolean isMagic = false;
     public int numOfMagicRefills = 0;
     private int summedLifeSpan = 0;
     private int deadAnimalsNum = 0;
     public int days;
     public Label daysCount;
+    public Label genome;
     public LineChart<String,Number> lineChart;
     public XYChart.Series<String,Number> series;
     public XYChart.Series<String,Number> grass;
+    public XYChart.Series<String,Number> avgLifetime;
+    public XYChart.Series<String,Number> avgEnergy;
+    public XYChart.Series<String,Number> avgOffspringNum;
+    Label trackedGenome;
+    Label trackedOffspring;
+    Label trackedDescendants;
+    Label deathDay;
+
+    private Animal trackedAnimal;
 
     protected List<Animal> animals = new ArrayList<Animal>();
 
-    public EvolutionEngine(boolean isMagic, IWorldMap map, App simulationObserver, GridPane pane, int moveDelay, int startEnergy, int moveEnergy, int plantEnergy, int jungleRatio, int initAnimalsNumber, Label daysCount, LineChart<String, Number> lineChart, XYChart.Series<String, Number> series, XYChart.Series<String, Number> grass){
+    public EvolutionEngine(boolean isMagic, IWorldMap map, App simulationObserver, GridPane pane, int moveDelay, int startEnergy, int moveEnergy, int plantEnergy, int jungleRatio, int initAnimalsNumber, Label daysCount,Label genome, LineChart<String, Number> lineChart, XYChart.Series<String, Number> series, XYChart.Series<String, Number> grass,XYChart.Series<String, Number> avgLifetime,XYChart.Series<String,Number> avgEnergy, XYChart.Series<String,Number> avgOffspringNum,Label trackedGenome,Label trackedOffspring,Label trackedDescendants,Label deathDay){
         this.map = map;
         this.simulationObserver = simulationObserver;
         this.pane = pane;
@@ -49,9 +60,17 @@ public class EvolutionEngine implements IEngine,Runnable{
         this.initAnimalsNumber = initAnimalsNumber;
         this.isMagic = isMagic;
         this.daysCount = daysCount;
+        this.genome = genome;
         this.lineChart = lineChart;
         this.series = series;
         this.grass = grass;
+        this.avgLifetime = avgLifetime;
+        this.avgEnergy = avgEnergy;
+        this.avgOffspringNum = avgOffspringNum;
+        this.trackedGenome = trackedGenome;
+        this.trackedOffspring = trackedOffspring;
+        this.trackedDescendants = trackedDescendants;
+        this.deathDay = deathDay;
 
 
         addInitialAnimals(map, startEnergy, initAnimalsNumber,true);
@@ -96,6 +115,17 @@ public class EvolutionEngine implements IEngine,Runnable{
 
         return cord.follows(jungleLowerLeft) && cord.precedes(jungleUpperRight);
     }
+    public Animal getTrackedAnimal() {
+        return trackedAnimal;
+    }
+
+    public void setTrackedAnimal(Animal trackedAnimal) {
+        this.trackedAnimal = trackedAnimal;
+    }
+
+    public void setTracking(){
+        tracked = !tracked;
+    }
 
     @Override
     public void run() {
@@ -111,6 +141,12 @@ public class EvolutionEngine implements IEngine,Runnable{
             if (!pausing) {
                 singleRun(days);
                 this.days++;
+            }
+
+            if (tracked){
+                Platform.runLater(() -> {
+                    simulationObserver.trackedAnimalVisual(trackedAnimal,this,this.map,trackedGenome,trackedOffspring,trackedDescendants,deathDay);
+                });
             }
 
             if (isMagic){
@@ -139,8 +175,8 @@ public class EvolutionEngine implements IEngine,Runnable{
     public synchronized void singleRun(int days) {
         Platform.runLater(() -> {
             simulationObserver.mapVisual(map,pane);
-            simulationObserver.statisticsVisual(this,this.daysCount);
-            simulationObserver.plotVisual(this.map,this,lineChart, series,grass,map.getWidth()*75/20);
+            simulationObserver.statisticsVisual(this,this.daysCount,this.genome);
+            simulationObserver.plotVisual(this.map,this,lineChart, series,grass,avgLifetime,avgEnergy,avgOffspringNum,map.getWidth()*75/20);
         });
 
 
@@ -279,10 +315,10 @@ public class EvolutionEngine implements IEngine,Runnable{
 
     public int grassNum() {return map.getNumOfGrasses();}
 
-    public int avgEnergy(ArrayList<Animal> animals){
+    public int avgEnergy(){
         int sum = 0;
         for (Animal animal : animals) sum = sum + animal.getEnergy();
-
+        if (numOfAnimals() == 0) return 0;
         return sum/numOfAnimals();
     }
 
@@ -314,12 +350,15 @@ public class EvolutionEngine implements IEngine,Runnable{
         return result;
     }
 
-    public ArrayList<Integer> dominantGenome(){
-        if (animalsWithDominantGenome() == null) return null;
-        return animalsWithDominantGenome().get(0).getGenome();
+    public String dominantGenome(){
+        if (animalsWithDominantGenome() == null) return "";
+        if (animalsWithDominantGenome().size() == 0) return "";
+        String result = animalsWithDominantGenome().get(0).getGenome().toString();
+        return result.replaceAll(",", "").replaceAll(" ","");
     }
 
     public int getAvgLifeSpan(){
+        if (deadAnimalsNum == 0) return 0;
         return summedLifeSpan / deadAnimalsNum;
     }
 
@@ -329,9 +368,11 @@ public class EvolutionEngine implements IEngine,Runnable{
         for (Animal animal : animals){
             sum = sum + animal.getOffspringNum();
         }
+        if (num == 0) return 0;
         return sum / num;
     }
 
-
-
+    public int getStartEnergy() {
+        return startEnergy;
+    }
 }
