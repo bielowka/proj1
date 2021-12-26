@@ -9,6 +9,10 @@ import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
@@ -28,35 +32,48 @@ public class App extends Application {
     GridPane mapWithWall = new GridPane();
     GridPane periodicMap = new GridPane();
 
-    Label plot1 = new Label(); //change to real plot
-    Label plot2 = new Label();
+//    Label plot1 = new Label(); //change to real plot
+//    Label plot2 = new Label();
+//    LineChart<String,Number> lineChart1;
+//    LineChart<String,Number> lineChart2;
+    final CategoryAxis xAxis = new CategoryAxis();
+    final NumberAxis yAxis = new NumberAxis();
+    final CategoryAxis xAxis2 = new CategoryAxis();
+    final NumberAxis yAxis2 = new NumberAxis();
+    final LineChart<String,Number> lineChart = new LineChart<>(xAxis,yAxis);
+    final LineChart<String,Number> lineChart2 = new LineChart<>(xAxis2,yAxis2);
 
     Label daysCount = new Label();
-    Label animalsNum = new Label();
-    Label grassNum = new Label();
-    Label genotypes = new Label();
-    Label avgLifeSpan = new Label();
-    Label avgDeadLifeSpan = new Label();
-    Label avgOffsprNum = new Label();
-    VBox statistics = new VBox(daysCount,animalsNum,grassNum,genotypes,avgLifeSpan,avgDeadLifeSpan,avgOffsprNum);
-    HBox statAndPlot = new HBox(statistics, plot1);
+//    Label animalsNum = new Label();
+//    Label grassNum = new Label();
+//    Label genotypes = new Label();
+//    Label avgEnergy = new Label();
+//    Label avgDeadLifeSpan = new Label();
+//    Label avgOffsprNum = new Label();
+//    VBox statistics = new VBox(daysCount,animalsNum,grassNum,genotypes,avgEnergy,avgDeadLifeSpan,avgOffsprNum);
+//    HBox statAndPlot = new HBox(statistics, lineChart1);
 
     Label daysCount2 = new Label();
-    Label animalsNum2 = new Label();
-    Label grassNum2 = new Label();
-    Label genotypes2 = new Label();
-    Label avgLifeSpan2 = new Label();
-    Label avgDeadLifeSpan2 = new Label();
-    Label avgOffsprNum2 = new Label();
-    VBox statistics2 = new VBox(daysCount2,animalsNum2,grassNum2,genotypes2,avgLifeSpan2,avgDeadLifeSpan2,avgOffsprNum2);
-    HBox statAndPlot2 = new HBox(statistics2, plot2);
+//    Label animalsNum2 = new Label();
+//    Label grassNum2 = new Label();
+//    Label genotypes2 = new Label();
+//    Label avgEnergy2 = new Label();
+//    Label avgDeadLifeSpan2 = new Label();
+//    Label avgOffsprNum2 = new Label();
+//    VBox statistics2 = new VBox(daysCount2,animalsNum2,grassNum2,genotypes2,avgEnergy2,avgDeadLifeSpan2,avgOffsprNum2);
+//    HBox statAndPlot2 = new HBox(statistics2, lineChart2);
 
-    public void plotVisual(IWorldMap map){
-
+    public void plotVisual(IWorldMap map, EvolutionEngine engine, LineChart<String, Number> lineChart, XYChart.Series<String, Number> series,XYChart.Series<String, Number> grass, int windowSize){
+        series.getData().add(new XYChart.Data<>(String.valueOf(engine.days),engine.numOfAnimals()));
+        if (series.getData().size() > windowSize)
+            series.getData().remove(0);
+        grass.getData().add(new XYChart.Data<>(String.valueOf(engine.days),engine.grassNum()));
+        if (grass.getData().size() > windowSize)
+            grass.getData().remove(0);
     }
 
-    public void statisticsVisual(){
-
+    public void statisticsVisual(EvolutionEngine engine,Label daysCount){
+        daysCount.setText(String.valueOf(engine.days));
     }
 
     public void mapVisual(IWorldMap map, GridPane pane) {
@@ -123,13 +140,13 @@ public class App extends Application {
         TextField jungleRatioTxtField = new TextField("4");
 
         Label leftMapIsMagicLabel = new Label("Is map on the left magic? (Y/N)");
-        TextField leftMapIsMagicTxtField = new TextField("N");
+        TextField leftMapIsMagicTxtField = new TextField("Y");
 
         Label rightMapIsMagicLabel = new Label("Is map on the right magic? (Y/N)");
         TextField rightMapIsMagicTxtField = new TextField("N");
 
         Label initialNumOfAnimalsLabel = new Label("Initial number of animals:");
-        TextField initialNumOfAnimalsField = new TextField("50");
+        TextField initialNumOfAnimalsField = new TextField("30");
 
         Label moveDelayLabel = new Label("Move delay:");
         TextField moveDelayField = new TextField("100");
@@ -169,42 +186,52 @@ public class App extends Application {
             mapVisual(mapwithwall,mapWithWall);
             mapVisual(periodicmap,periodicMap);
 
+            XYChart.Series<String,Number> series = new XYChart.Series<>();
+            XYChart.Series<String,Number> grass = new XYChart.Series<>();
+//            XYChart.Series<String,Number> avgLifeTime = new XYChart.Series<>();
+            series.setName("Number of animals");
+            grass.setName("Number of grass");
+//            avgLifeTime.setName("Average lifetime");
+            lineChart.getData().add(series);
+            lineChart.getData().add(grass);
+//            lineChart.getData().add(avgLifeTime);
+            xAxis.setAnimated(false);
+            yAxis.setAnimated(false);
+            lineChart2.setAnimated(false);
+
+            XYChart.Series<String,Number> series2 = new XYChart.Series<>();
+            XYChart.Series<String,Number> grass2 = new XYChart.Series<>();
+            series2.setName("Number of animals");
+            grass2.setName("Number of grass");
+            lineChart2.getData().add(series2);
+            lineChart2.getData().add(grass2);
+            xAxis2.setAnimated(false);
+            yAxis2.setAnimated(false);
+            lineChart2.setAnimated(false);
+
+
             boolean isLeftMapMagic = (Objects.equals(leftMapIsMagic, "Y"));
             boolean isRightMapMagic = (Objects.equals(rightMapIsMagic, "Y"));
 
-            IEngine leftEngine = new EvolutionEngine(isLeftMapMagic,mapwithwall, this,mapWithWall, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber);
-            IEngine rightEngine = new EvolutionEngine(isRightMapMagic,periodicmap, this,periodicMap, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber);
+            IEngine leftEngine = new EvolutionEngine(isLeftMapMagic,mapwithwall, this,mapWithWall, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber,daysCount,lineChart,series,grass);
+            IEngine rightEngine = new EvolutionEngine(isRightMapMagic,periodicmap, this,periodicMap, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber,daysCount2, lineChart2, series2,grass2);
 
 
-//            IEngine leftEngine;
-//            IEngine rightEngine;
-//            if (leftMapIsMagic == "N") {
-//                leftEngine = new EvolutionEngine(mapwithwall, this,mapWithWall, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber);
-//            } else {
-//                leftEngine = new MagicEvolutionEngine(mapwithwall, this,mapWithWall, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber);
-//            }
-//            if (rightMapIsMagic == "N") {
-//                rightEngine = new EvolutionEngine(periodicmap, this,periodicMap, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber);
-//            }
-//            else {
-//                rightEngine = new MagicEvolutionEngine(periodicmap, this,periodicMap, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber);
-//            }
-
-                Thread leftEngineThread = new Thread((Runnable) leftEngine);
-                leftEngineThread.start();
+            Thread leftEngineThread = new Thread((Runnable) leftEngine);
+            leftEngineThread.start();
                 startstop.setOnAction((event2) -> {
                     leftEngine.switchPausing();
                 });
 
 
-                Thread rightEngineThread = new Thread((Runnable) rightEngine);
-                rightEngineThread.start();
+            Thread rightEngineThread = new Thread((Runnable) rightEngine);
+            rightEngineThread.start();
                 startstop2.setOnAction((event2) -> {
                     rightEngine.switchPausing();
                 });
 
-            VBox leftMap = new VBox(mapWithWall,startstop,statAndPlot);
-            VBox rightMap = new VBox(periodicMap,startstop2,statAndPlot2);
+            VBox leftMap = new VBox(mapWithWall,startstop,daysCount,lineChart);
+            VBox rightMap = new VBox(periodicMap,startstop2,daysCount2,lineChart2);
             leftMap.setAlignment(Pos.TOP_CENTER);
             rightMap.setAlignment(Pos.TOP_CENTER);
 

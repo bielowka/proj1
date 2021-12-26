@@ -22,7 +22,7 @@ class AnimalTest {
         Animal dog = new Animal(new Vector2d(2, 3), 150, map, new ArrayList<Integer>(Arrays.asList(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)));
         Animal cat = new Animal(new Vector2d(4, 7), 50, map, new ArrayList<Integer>(Arrays.asList(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)));
 
-        Animal catdog = new Animal(dog.getPosition(), dog, cat, map);
+        Animal catdog = new Animal(dog.getPosition(), dog, cat, map,0);
 
         assertTrue(
                 catdog.getGenome().equals(new ArrayList<Integer>(Arrays.asList(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1)))
@@ -36,7 +36,7 @@ class AnimalTest {
         Animal dog1 = new Animal(new Vector2d(2, 3), 50, map1, new ArrayList<Integer>(Arrays.asList(0,0,0,0,0,0,0,0,1,1,2,2,2,2,2,2,3,3,4,4,4,4,4,4,5,5,6,6,7,7,7,7)));
         Animal cat1 = new Animal(new Vector2d(4, 7), 50, map1, new ArrayList<Integer>(Arrays.asList(1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)));
 
-        Animal catdog1 = new Animal(dog1.getPosition(), dog1, cat1, map1);
+        Animal catdog1 = new Animal(dog1.getPosition(), dog1, cat1, map1,0);
 
         assertEquals(24, catdog1.getEnergy());
     }

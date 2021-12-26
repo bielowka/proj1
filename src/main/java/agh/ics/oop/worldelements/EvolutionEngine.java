@@ -4,12 +4,12 @@ import agh.ics.oop.basics.MoveDirection;
 import agh.ics.oop.basics.Vector2d;
 import agh.ics.oop.gui.App;
 import javafx.application.Platform;
+import javafx.scene.chart.LineChart;
+import javafx.scene.chart.XYChart;
+import javafx.scene.control.Label;
 import javafx.scene.layout.GridPane;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 import static java.lang.Math.sqrt;
 
@@ -27,10 +27,17 @@ public class EvolutionEngine implements IEngine,Runnable{
     public boolean pausing = false;
     public boolean isMagic = false;
     public int numOfMagicRefills = 0;
+    private int summedLifeSpan = 0;
+    private int deadAnimalsNum = 0;
+    public int days;
+    public Label daysCount;
+    public LineChart<String,Number> lineChart;
+    public XYChart.Series<String,Number> series;
+    public XYChart.Series<String,Number> grass;
 
     protected List<Animal> animals = new ArrayList<Animal>();
 
-    public EvolutionEngine(boolean isMagic,IWorldMap map, App simulationObserver,GridPane pane, int moveDelay, int startEnergy, int moveEnergy, int plantEnergy, int jungleRatio, int initAnimalsNumber){
+    public EvolutionEngine(boolean isMagic, IWorldMap map, App simulationObserver, GridPane pane, int moveDelay, int startEnergy, int moveEnergy, int plantEnergy, int jungleRatio, int initAnimalsNumber, Label daysCount, LineChart<String, Number> lineChart, XYChart.Series<String, Number> series, XYChart.Series<String, Number> grass){
         this.map = map;
         this.simulationObserver = simulationObserver;
         this.pane = pane;
@@ -41,6 +48,11 @@ public class EvolutionEngine implements IEngine,Runnable{
         this.jungleRatio = jungleRatio;
         this.initAnimalsNumber = initAnimalsNumber;
         this.isMagic = isMagic;
+        this.daysCount = daysCount;
+        this.lineChart = lineChart;
+        this.series = series;
+        this.grass = grass;
+
 
         addInitialAnimals(map, startEnergy, initAnimalsNumber,true);
     }
@@ -87,16 +99,19 @@ public class EvolutionEngine implements IEngine,Runnable{
 
     @Override
     public void run() {
-        int i=0;
+        this.days=0;
         boolean animalsLeft = true;
         while(animalsLeft) {
-            i++;
+
             try {
                 Thread.sleep(moveDelay/2);
             } catch (InterruptedException e) {
                 e.printStackTrace();}
 
-            if (!pausing) singleRun();
+            if (!pausing) {
+                singleRun(days);
+                this.days++;
+            }
 
             if (isMagic){
                 if(numOfAnimals() == 5){
@@ -105,7 +120,7 @@ public class EvolutionEngine implements IEngine,Runnable{
                         System.out.print(numOfMagicRefills + "");
                         System.out.println("Magic refill");
                         try {
-                            Thread.sleep(2000);
+                            Thread.sleep(1000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();}
                         addInitialAnimals(this.map,this.startEnergy,5,false);
@@ -121,9 +136,11 @@ public class EvolutionEngine implements IEngine,Runnable{
         pausing = !pausing;
     }
 
-    public void singleRun() {
+    public synchronized void singleRun(int days) {
         Platform.runLater(() -> {
             simulationObserver.mapVisual(map,pane);
+            simulationObserver.statisticsVisual(this,this.daysCount);
+            simulationObserver.plotVisual(this.map,this,lineChart, series,grass,map.getWidth()*75/20);
         });
 
 
@@ -132,12 +149,14 @@ public class EvolutionEngine implements IEngine,Runnable{
         //removing if dead
         for (int i = 0; i < animals.size(); i++) {
             if (animals.get(i).getEnergy() <= 0) {
+                summedLifeSpan = summedLifeSpan + days - animals.get(i).getBirthdate();
+                deadAnimalsNum++;
                 map.delete(animals.get(i));
             }
         }
 
         for (Animal animal : animals){
-            if (animal.getEnergy() <= 0) map.delete(animal);
+            if (animal.getEnergy() <= 0){ map.delete(animal);}
         }
 
         animals.removeIf(animal -> animal.getEnergy() <= 0);
@@ -181,11 +200,7 @@ public class EvolutionEngine implements IEngine,Runnable{
                         if (howManyOfHiEn == 1){
                             Animal parent1 = map.getAnimals().get(new Vector2d(x,y)).get(0);
                             Animal parent2 = map.getAnimals().get(new Vector2d(x,y)).get(1);
-                            if ((parent1.getEnergy() >= startEnergy/2) && (parent2.getEnergy() >= startEnergy/2)){
-                                Animal kid = new Animal(new Vector2d(x,y),parent1,parent2,map);
-                                map.place(kid);
-                                this.animals.add(kid);
-                            }
+                            newAnimal(days, x, y, parent1, parent2);
                         }
                         else{
                             int p1 = 0;
@@ -197,11 +212,7 @@ public class EvolutionEngine implements IEngine,Runnable{
 
                             Animal parent1 = map.getAnimals().get(new Vector2d(x,y)).get(p1);
                             Animal parent2 = map.getAnimals().get(new Vector2d(x,y)).get(p2);
-                            if ((parent1.getEnergy() >= startEnergy/2) && (parent2.getEnergy() >= startEnergy/2)){
-                                Animal kid = new Animal(new Vector2d(x,y),parent1,parent2,map);
-                                map.place(kid);
-                                this.animals.add(kid);
-                            }
+                            newAnimal(days, x, y, parent1, parent2);
 
                         }
 
@@ -254,7 +265,19 @@ public class EvolutionEngine implements IEngine,Runnable{
 
     }
 
+    private void newAnimal(int days, int x, int y, Animal parent1, Animal parent2) {
+        if ((parent1.getEnergy() >= startEnergy/2) && (parent2.getEnergy() >= startEnergy/2)){
+            parent1.setOffspringNum(parent1.getOffspringNum() + 1);
+            parent2.setOffspringNum(parent2.getOffspringNum() + 1);
+            Animal kid = new Animal(new Vector2d(x,y),parent1,parent2,map,days);
+            map.place(kid);
+            this.animals.add(kid);
+        }
+    }
+
     public int numOfAnimals() {return animals.size();}
+
+    public int grassNum() {return map.getNumOfGrasses();}
 
     public int avgEnergy(ArrayList<Animal> animals){
         int sum = 0;
@@ -262,6 +285,53 @@ public class EvolutionEngine implements IEngine,Runnable{
 
         return sum/numOfAnimals();
     }
+
+    public ArrayList<Animal> animalsWithDominantGenome(){
+        Map<ArrayList<Integer>,Integer> genotypes = new LinkedHashMap<>();
+        for (Animal animal : animals) {
+            if (genotypes.get(animal.getGenome() ) != null) {
+                int i = genotypes.get(animal.getGenome());
+                genotypes.remove(animal.getGenome());
+                genotypes.put(animal.getGenome(),i + 1);
+            }
+            else genotypes.put(animal.getGenome(),1);
+        }
+        int val = 0;
+        ArrayList<Integer> genome = new ArrayList<>();
+        ArrayList<Animal> result = new ArrayList<>();
+
+        for (Map.Entry<ArrayList<Integer>,Integer> el : genotypes.entrySet()){
+            if (el.getValue() > val){
+                genome = el.getKey();
+                val = el.getValue();
+            }
+        }
+
+        for (Animal animal : animals){
+            if (animal.getGenome().equals(genome)) result.add(animal);
+        }
+
+        return result;
+    }
+
+    public ArrayList<Integer> dominantGenome(){
+        if (animalsWithDominantGenome() == null) return null;
+        return animalsWithDominantGenome().get(0).getGenome();
+    }
+
+    public int getAvgLifeSpan(){
+        return summedLifeSpan / deadAnimalsNum;
+    }
+
+    public int avgOffspringNum(){
+        int sum = 0;
+        int num = numOfAnimals();
+        for (Animal animal : animals){
+            sum = sum + animal.getOffspringNum();
+        }
+        return sum / num;
+    }
+
 
 
 }

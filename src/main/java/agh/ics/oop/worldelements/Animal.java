@@ -13,6 +13,8 @@ public class Animal implements IMapElement{
     private Vector2d currentPosition;
     private ArrayList<Integer> genome;
     private List<IPositionChangedObserver> observers = new ArrayList<>();
+    private int birthdate;
+    private int offspringNum = 0;
 
 
     public Animal(Vector2d initialPosition, int initialEnergy, IWorldMap map,ArrayList<Integer> genome){
@@ -22,15 +24,17 @@ public class Animal implements IMapElement{
         Random rand = new Random();
         this.currentDirection = MapDirection.intToMapDirection(rand.nextInt(8));
         this.Energy = initialEnergy;
+        this.birthdate = 0;
     }
 
-    public Animal(Vector2d initialPosition, Animal parent1, Animal parent2, IWorldMap map){ //przypadek kiedy jest dzieckiem
+    public Animal(Vector2d initialPosition, Animal parent1, Animal parent2, IWorldMap map, int birthdate){ //przypadek kiedy jest dzieckiem
         this.map = map;
         this.currentPosition = parent1.getPosition();
         this.Energy = parent1.getEnergy() / 4 + parent2.getEnergy() / 4;
         this.genome = new ArrayList<Integer>();
         Random rand = new Random();
         this.currentDirection = MapDirection.intToMapDirection(rand.nextInt(8));
+        this.birthdate = birthdate;
 
         boolean leftOrRight = rand.nextBoolean();
         int sumOfParentsEnergy = parent1.getEnergy() + parent2.getEnergy();
@@ -179,6 +183,18 @@ public class Animal implements IMapElement{
 
     public void positionChanged(Vector2d oldPosition, Vector2d newPosition){
         for (IPositionChangedObserver observer : observers) observer.positionChanged(this,oldPosition, newPosition);
+    }
+
+    public int getBirthdate() {
+        return birthdate;
+    }
+
+    public int getOffspringNum() {
+        return offspringNum;
+    }
+
+    public void setOffspringNum(int offspringNum) {
+        this.offspringNum = offspringNum;
     }
 
     @Override
