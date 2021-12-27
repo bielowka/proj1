@@ -199,7 +199,8 @@ public class Animal implements IMapElement{
 
     @Override
     public String Visualize() {
-        return "" + this.Energy;
+
+        return "src/main/resources/animal10.png";
     }
 
     @Override

@@ -16,7 +16,7 @@ public class Grass implements IMapElement{
     }
 
     public String Visualize() {
-        return "*";
+        return "src/main/resources/grass.png";
     }
 
     @Override

@@ -1,31 +1,46 @@
 package agh.ics.oop.gui;
 
+import agh.ics.oop.worldelements.Animal;
 import agh.ics.oop.worldelements.IMapElement;
-import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
 public class GuiElementBox{
-    public GuiElementBox(IMapElement object) {
+    int startEnergy;
+    int size;
+    public GuiElementBox(IMapElement object, int startEnergy,int size) {
+        this.startEnergy = startEnergy;
+        this.size = size;
     }
     public VBox MakeBox(IMapElement object) throws FileNotFoundException{
-//        Image image = new Image(new FileInputStream(object.Visualize()));
-//        ImageView imageView = new ImageView(image);
-//        imageView.setFitWidth(30);
-//        imageView.setFitHeight(30);
-//
-//        Label label = new Label(object.toString());
-//
-//        VBox box = new VBox(imageView,label);
-//        box.setAlignment(Pos.CENTER);
-//        return box;
+        Image image;
+        if (object instanceof Animal){
+            String suffix = "10";
+            float enLvl = (float) (((Animal) object).getEnergy()) / (float) startEnergy * 10;
+            int enLvlNorm = (int) enLvl;
+            if (enLvlNorm >= 70) suffix = "70";
+            else if (enLvlNorm >= 10) suffix = String.valueOf((enLvlNorm / 10)*10);
+            else if (enLvlNorm <= 0) suffix = "";
+            image = new Image(new FileInputStream(object.Visualize().replace("animal10.png","animal" + suffix + ".png")));
 
-        Label label = new Label(object.Visualize());
-        VBox box = new VBox(label);
+        }
+        else{
+            image = new Image(new FileInputStream(object.Visualize()));
+        }
+
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(size);
+        imageView.setFitHeight(size);
+        VBox box = new VBox(imageView);
         return box;
 
     }
+
+
 
 
 

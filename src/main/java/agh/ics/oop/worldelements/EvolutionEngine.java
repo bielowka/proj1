@@ -43,13 +43,16 @@ public class EvolutionEngine implements IEngine,Runnable{
     Label trackedOffspring;
     Label trackedDescendants;
     Label deathDay;
+    ArrayList<String[]> output;
+    Label magicLabel;
 
     private Animal trackedAnimal;
     private ArrayList<Animal> trackedAnimalDescendants;
 
     protected List<Animal> animals = new ArrayList<Animal>();
+    public int[] outputSum;
 
-    public EvolutionEngine(boolean isMagic, IWorldMap map, App simulationObserver, GridPane pane, int moveDelay, int startEnergy, int moveEnergy, int plantEnergy, int jungleRatio, int initAnimalsNumber, Label daysCount,Label genome, LineChart<String, Number> lineChart, XYChart.Series<String, Number> series, XYChart.Series<String, Number> grass,XYChart.Series<String, Number> avgLifetime,XYChart.Series<String,Number> avgEnergy, XYChart.Series<String,Number> avgOffspringNum,Label trackedGenome,Label trackedOffspring,Label trackedDescendants,Label deathDay){
+    public EvolutionEngine(boolean isMagic, IWorldMap map, App simulationObserver, GridPane pane, int moveDelay, int startEnergy, int moveEnergy, int plantEnergy, int jungleRatio, int initAnimalsNumber, Label daysCount,Label genome, LineChart<String, Number> lineChart, XYChart.Series<String, Number> series, XYChart.Series<String, Number> grass,XYChart.Series<String, Number> avgLifetime,XYChart.Series<String,Number> avgEnergy, XYChart.Series<String,Number> avgOffspringNum,Label trackedGenome,Label trackedOffspring,Label trackedDescendants,Label deathDay,ArrayList<String[]> output,int[] outputSum,Label magicLabel){
         this.map = map;
         this.simulationObserver = simulationObserver;
         this.pane = pane;
@@ -72,7 +75,9 @@ public class EvolutionEngine implements IEngine,Runnable{
         this.trackedOffspring = trackedOffspring;
         this.trackedDescendants = trackedDescendants;
         this.deathDay = deathDay;
-
+        this.output = output;
+        this.outputSum = outputSum;
+        this.magicLabel = magicLabel;
 
         addInitialAnimals(map, startEnergy, initAnimalsNumber,true);
     }
@@ -83,7 +88,7 @@ public class EvolutionEngine implements IEngine,Runnable{
         while (i < initAnimalsNumber){
             int x = rand.nextInt(map.getWidth());
             int y = rand.nextInt(map.getHeight());
-            if (map.canMoveTo(new Vector2d(x,y)) && map.objectAt(new Vector2d(x,y)) == null){
+            if (map.canMoveTo(new Vector2d(x,y)) && !(map.objectAt(new Vector2d(x,y)) instanceof Animal)){
                 ArrayList<Integer> genome;
                 if (isGenomeRandom) genome = newRandomGenome(rand);
                 else genome = animals.get(i).getGenome();
@@ -127,9 +132,12 @@ public class EvolutionEngine implements IEngine,Runnable{
     public void setTracking(){
         tracked = !tracked;
     }
+    public void setTrackingVal(boolean a){
+        tracked = a;
+    }
 
     @Override
-    public void run() {
+    public synchronized void run() {
         this.days=0;
         boolean animalsLeft = true;
         while(animalsLeft) {
@@ -154,13 +162,17 @@ public class EvolutionEngine implements IEngine,Runnable{
                 if(numOfAnimals() == 5){
                     if (numOfMagicRefills < 3){
                         numOfMagicRefills++;
-                        System.out.print(numOfMagicRefills + "");
-                        System.out.println("Magic refill");
+                        Platform.runLater(() -> {
+                            magicLabel.setText(String.valueOf(numOfMagicRefills) + " MAGIC REFILL!");
+                        });
                         try {
-                            Thread.sleep(1000);
+                            Thread.sleep(1500);
                         } catch (InterruptedException e) {
                             e.printStackTrace();}
                         addInitialAnimals(this.map,this.startEnergy,5,false);
+                        Platform.runLater(() -> {
+                            magicLabel.setText("");
+                        });
                     }
                 }
             }
@@ -175,9 +187,10 @@ public class EvolutionEngine implements IEngine,Runnable{
 
     public synchronized void singleRun(int days) {
         Platform.runLater(() -> {
-            simulationObserver.mapVisual(map,pane);
+            simulationObserver.mapVisual(map,pane,this);
             simulationObserver.statisticsVisual(this,this.daysCount,this.genome);
             simulationObserver.plotVisual(this.map,this,lineChart, series,grass,avgLifetime,avgEnergy,avgOffspringNum,map.getWidth()*75/20);
+            simulationObserver.outputUpdate(map,this,output,outputSum);
         });
 
 

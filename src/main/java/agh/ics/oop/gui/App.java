@@ -18,10 +18,19 @@ import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import static org.junit.Assert.assertTrue;
 
 public class App extends Application {
 
@@ -49,6 +58,32 @@ public class App extends Application {
     Animal trackedAnimal1;
     Animal trackedAnimal2;
 
+    Button dominantGenome = new Button("Show animals with dominant genome (map on the left)");
+    Button toFile = new Button("Generate CSV file");
+    ArrayList<String[]> output = new ArrayList<>();
+    int[] outputSum = {0,0,0,0,0};
+
+    Button dominantGenome2 = new Button("Show animals with dominant genome (map on the right)");
+    Button toFile2 = new Button("Generate CSV file");
+    ArrayList<String[]> output2 = new ArrayList<>();
+    int[] outputSum2 = {0,0,0,0,0};
+
+    Label magicRefillNotification = new Label();
+    Label magicRefillNotification2 = new Label();
+
+    boolean show;
+    boolean show2;
+
+    public void outputUpdate(IWorldMap map, EvolutionEngine engine,ArrayList<String[]> output,int[] outputSum){
+        String[] dailyOutput = {String.valueOf(engine.numOfAnimals()),String.valueOf(map.getNumOfGrasses()),String.valueOf(engine.avgEnergy()),String.valueOf(engine.getAvgLifeSpan()),String.valueOf(engine.avgOffspringNum())};
+        outputSum[0]=outputSum[0]+engine.numOfAnimals();
+        outputSum[1]=outputSum[1]+map.getNumOfGrasses();
+        outputSum[2]=outputSum[2]+engine.avgEnergy();
+        outputSum[3]=outputSum[3]+engine.getAvgLifeSpan();
+        outputSum[4]=outputSum[4]+engine.avgOffspringNum();
+        output.add(dailyOutput);
+    }
+
     public void plotVisual(IWorldMap map, EvolutionEngine engine, LineChart<String, Number> lineChart, XYChart.Series<String, Number> series,XYChart.Series<String, Number> grass,XYChart.Series<String, Number> avgLifetime,XYChart.Series<String, Number> avgEnergy,XYChart.Series<String, Number> avgOffspringNum, int windowSize){
         series.getData().add(new XYChart.Data<>(String.valueOf(engine.days),engine.numOfAnimals()));
         if (series.getData().size() > windowSize)
@@ -67,47 +102,55 @@ public class App extends Application {
             avgOffspringNum.getData().remove(0);
     }
 
+
     public void statisticsVisual(EvolutionEngine engine,Label daysCount,Label genotype){
         daysCount.setText("Day: " + String.valueOf(engine.days));
         genotype.setText("Genom: " + engine.dominantGenome());
     }
 
     public void trackedAnimalVisual(Animal animal,EvolutionEngine engine,IWorldMap map,Label trackedGenome,Label trackedOffspring, Label trackedDescendants, Label deathDay){
-        trackedGenome.setText("Genome:" + (animal.getGenome().toString().replace(",", "").replace(" ","")));
-        trackedOffspring.setText("Kids: " + String.valueOf(animal.getOffspringNum()));
-        trackedDescendants.setText("Descendants: " + String.valueOf(engine.numOfDescendants()));
-        if (animal.getEnergy() <= 0){
+        if (animal == null){
             deathDay.setText("Dead on: " + String.valueOf(engine.days) + " day");
-            engine.setTracking();
+            engine.setTrackingVal(false);
             engine.setTrackedAnimal(null);
         }
+        else if (animal.getEnergy() <= 0){
+            deathDay.setText("Dead on: " + String.valueOf(engine.days) + " day");
+            engine.setTrackingVal(false);
+            engine.setTrackedAnimal(null);
+        }
+        else{
+            trackedGenome.setText("Genome:" + (animal.getGenome().toString().replace(",", "").replace(" ","")));
+            trackedOffspring.setText("Kids: " + String.valueOf(animal.getOffspringNum()));
+            trackedDescendants.setText("Descendants: " + String.valueOf(engine.numOfDescendants()));
+        }
+
     }
 
-    public void mapVisual(IWorldMap map, GridPane pane) {
+    public void mapVisual(IWorldMap map, GridPane pane,EvolutionEngine engine) {
         pane.setGridLinesVisible(false);
         pane.getColumnConstraints().clear();
         pane.getRowConstraints().clear();
         pane.getChildren().clear();
         pane.setGridLinesVisible(true);
 
+
         pane.setPadding(new Insets(10, 10, 10, 10));
 
         for (int i = 0; i < map.getWidth(); i++) {
-            ColumnConstraints columnConstraints = new ColumnConstraints(20); // width in pixels
-//            columnConstraints.setPercentWidth(200.0 / map.getWidth()); // percentage of total width
+            ColumnConstraints columnConstraints = new ColumnConstraints(25); // width in pixels
             pane.getColumnConstraints().add(columnConstraints);
         }
 
         for (int i = 0; i < map.getHeight(); i++) {
-            RowConstraints rowConstraints = new RowConstraints(20);
-//            rowConstraints.setPercentHeight(200.0 / map.getHeight());
+            RowConstraints rowConstraints = new RowConstraints(25);
             pane.getRowConstraints().add(rowConstraints);
         }
 
         for (int y = 0; y < map.getHeight(); y++)
             for (int x = 0; x < map.getWidth(); x++) {
                 if (map.objectAt(new Vector2d(x, y)) != null) {
-                    GuiElementBox Box = new GuiElementBox((IMapElement) map.objectAt(new Vector2d(x, y)));
+                    GuiElementBox Box = new GuiElementBox((IMapElement) map.objectAt(new Vector2d(x, y)),engine.getStartEnergy(),25);
                     VBox box = null;
                     try {
                         box = Box.MakeBox((IMapElement) map.objectAt(new Vector2d(x, y)));
@@ -122,37 +165,46 @@ public class App extends Application {
             }
     }
 
-    public void mapPaused(IWorldMap map, EvolutionEngine engine, GridPane pane, Label trackedGenome,Label trackedOffspring,Label trackedDescendants,Label deathDay){
+    public void mapPaused(IWorldMap map, EvolutionEngine engine, GridPane pane, Label trackedGenome,Label trackedOffspring,Label trackedDescendants,Label deathDay,Button thisDominantGenome, Button thisToFile, Boolean show){
         pane.setGridLinesVisible(false);
         pane.getColumnConstraints().clear();
         pane.getRowConstraints().clear();
         pane.getChildren().clear();
         pane.setGridLinesVisible(true);
 
+        thisDominantGenome.setVisible(true);
+        thisToFile.setVisible(true);
+
         pane.setPadding(new Insets(10, 10, 10, 10));
 
+
         for (int i = 0; i < map.getWidth(); i++) {
-            ColumnConstraints columnConstraints = new ColumnConstraints(20); // width in pixels
-//            columnConstraints.setPercentWidth(200.0 / map.getWidth()); // percentage of total width
+            ColumnConstraints columnConstraints = new ColumnConstraints(25); // width in pixels
             pane.getColumnConstraints().add(columnConstraints);
         }
 
         for (int i = 0; i < map.getHeight(); i++) {
-            RowConstraints rowConstraints = new RowConstraints(20);
-//            rowConstraints.setPercentHeight(200.0 / map.getHeight());
+            RowConstraints rowConstraints = new RowConstraints(25);
             pane.getRowConstraints().add(rowConstraints);
         }
 
         for (int y = 0; y < map.getHeight(); y++)
             for (int x = 0; x < map.getWidth(); x++) {
                 if (map.objectAt(new Vector2d(x, y)) != null) {
-                    GuiElementBox Box = new GuiElementBox((IMapElement) map.objectAt(new Vector2d(x, y)));
+                    GuiElementBox Box;
+                    Box = new GuiElementBox((IMapElement) map.objectAt(new Vector2d(x, y)), engine.getStartEnergy(),25);
+                    if (show && map.objectAt(new Vector2d(x,y)) instanceof Animal){
+                        if (engine.animalsWithDominantGenome().contains(((Animal) map.objectAt(new Vector2d(x, y))))){
+                            Box = new GuiElementBox((IMapElement) map.objectAt(new Vector2d(x, y)), engine.getStartEnergy(),60);
+                        }
+                    }
                     VBox box = null;
                     try {
                         box = Box.MakeBox((IMapElement) map.objectAt(new Vector2d(x, y)));
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }
+
                     GridPane.setConstraints(box, x, y);
                     GridPane.setHalignment(box, HPos.CENTER);
                     pane.add(box, x, y);
@@ -161,6 +213,8 @@ public class App extends Application {
                     box.setOnMouseEntered((event) -> {
                         if (map.objectAt(new Vector2d(posX,posY)) instanceof Animal) {
                             if (!engine.tracked) {
+                                trackedOffspring.setText("");
+                                trackedDescendants.setText("");
                                 deathDay.setText("");
                                 trackedGenome.setText("Genome:" + ((Animal) map.objectAt(new Vector2d(posX,posY))).getGenome().toString().replace(",", "").replace(" ",""));
                             }
@@ -169,16 +223,37 @@ public class App extends Application {
 
                     box.setOnMouseClicked((event) -> {
                         if (map.objectAt(new Vector2d(posX,posY)) instanceof Animal) {
-                            engine.setTrackedAnimal((Animal) map.objectAt(new Vector2d(posX,posY)));
-                            engine.getTrackedAnimal().setOffspringNum(0);
-                            engine.setTracking();
-                            engine.setTrackedAnimalDescendants();
+                                engine.setTrackedAnimal((Animal) map.objectAt(new Vector2d(posX,posY)));
+                                engine.getTrackedAnimal().setOffspringNum(0);
+                                engine.setTrackingVal(true);
+                                engine.setTrackedAnimalDescendants();
                         }
                     });
 
                 }
 
             }
+    }
+
+    public String toCSV(String[] output) {
+        return Stream.of(output).collect(Collectors.joining(";"));
+    }
+
+    public void exportToFile(int day,ArrayList<String[]> thisOutput,int[] thisOutputSum,String side) throws IOException {
+        File csvOutputFile = new File(side + "engine_output_on_day_" + String.valueOf(day) + ".csv");
+        try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
+            thisOutput.stream()
+                    .map(this::toCSV)
+                    .forEach(pw::println);
+            pw.println();
+            pw.print(String.valueOf(thisOutputSum[0]/thisOutput.size()));pw.print(";");
+            pw.print(String.valueOf(thisOutputSum[1]/thisOutput.size()));pw.print(";");
+            pw.print(String.valueOf(thisOutputSum[2]/thisOutput.size()));pw.print(";");
+            pw.print(String.valueOf(thisOutputSum[3]/thisOutput.size()));pw.print(";");
+            pw.print(String.valueOf(thisOutputSum[4]/thisOutput.size()));pw.print(";");
+
+        }
+        assertTrue(csvOutputFile.exists());
     }
 
 
@@ -249,8 +324,6 @@ public class App extends Application {
 
             IWorldMap mapwithwall = new MapWithWall(width, height);
             IWorldMap periodicmap = new PeriodicBoundaryMap(width, height);
-            mapVisual(mapwithwall,mapWithWall);
-            mapVisual(periodicmap,periodicMap);
 
             XYChart.Series<String,Number> series = new XYChart.Series<>();
             XYChart.Series<String,Number> grass = new XYChart.Series<>();
@@ -306,18 +379,61 @@ public class App extends Application {
             Label trackedDescendants2 = new Label();
             Label deathDay2 = new Label();
             VBox tracking2 = new VBox(trackedGenome2,trackedOffspring2,trackedDescendants2,deathDay2);
+
+            dominantGenome.setVisible(false);
+            toFile.setVisible(false);
+            dominantGenome2.setVisible(false);
+            toFile2.setVisible(false);
+            magicRefillNotification.setPrefHeight(5);
+            magicRefillNotification.setTextFill(Paint.valueOf("red"));
+            magicRefillNotification2.setPrefHeight(5);
+            magicRefillNotification2.setTextFill(Paint.valueOf("red"));
+            VBox buttons = new VBox(dominantGenome,toFile,dominantGenome2,toFile2);
+            buttons.setAlignment(Pos.CENTER);
+            buttons.setSpacing(5);
+
             Separator sep = new Separator(Orientation.HORIZONTAL);
-            VBox tracking = new VBox(tracking1,sep,tracking2);
+            Separator sep1 = new Separator(Orientation.HORIZONTAL);
+            sep1.setPrefHeight(10);
+            VBox tracking = new VBox(tracking1,sep,tracking2,sep1,buttons);
 
-            IEngine leftEngine = new EvolutionEngine(isLeftMapMagic,mapwithwall, this,mapWithWall, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber,daysCount,genotype,lineChart,series,grass,avgLifeTime,avgEnergy,avgOffspringNum,trackedGenome,trackedOffspring,trackedDescendants,deathDay);
-            IEngine rightEngine = new EvolutionEngine(isRightMapMagic,periodicmap, this,periodicMap, moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber,daysCount2,genotype2,lineChart2, series2,grass2,avgLifeTime2,avgEnergy2,avgOffspringNum2,trackedGenome2,trackedOffspring2,trackedDescendants2,deathDay2);
+            IEngine leftEngine = new EvolutionEngine(isLeftMapMagic,mapwithwall, this,mapWithWall,
+                    moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber,
+                    daysCount,genotype,lineChart,series,grass,avgLifeTime,avgEnergy,avgOffspringNum,
+                    trackedGenome,trackedOffspring,trackedDescendants,deathDay,
+                    output,outputSum,
+                    magicRefillNotification);
+            IEngine rightEngine = new EvolutionEngine(isRightMapMagic,periodicmap, this,periodicMap,
+                    moveDelay, startEnergy, moveEnergy, plantEnergy, jungleRatio, initAnimalsNumber,
+                    daysCount2,genotype2,lineChart2, series2,grass2,avgLifeTime2,avgEnergy2,avgOffspringNum2
+                    ,trackedGenome2,trackedOffspring2,trackedDescendants2,deathDay2,
+                    output2,outputSum2,
+                    magicRefillNotification2);
 
+            mapVisual(mapwithwall,mapWithWall,(EvolutionEngine) leftEngine);
+            mapVisual(periodicmap,periodicMap,(EvolutionEngine) rightEngine);
 
             Thread leftEngineThread = new Thread((Runnable) leftEngine);
             leftEngineThread.start();
                 startstop.setOnAction((event2) -> {
                     leftEngine.switchPausing();
-                    this.mapPaused(mapwithwall,(EvolutionEngine) leftEngine,mapWithWall,trackedGenome,trackedOffspring,trackedDescendants,deathDay);
+                    if (((EvolutionEngine) leftEngine).pausing) {
+                        this.mapPaused(mapwithwall,(EvolutionEngine) leftEngine,mapWithWall,trackedGenome,trackedOffspring,trackedDescendants,deathDay,dominantGenome,toFile,false);
+                        toFile.setOnAction((event3) -> {
+                            try {
+                                exportToFile(((EvolutionEngine) leftEngine).days,output,outputSum,"left");
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                        dominantGenome.setOnAction((event3) -> {
+                            this.mapPaused(mapwithwall,(EvolutionEngine) leftEngine,mapWithWall,trackedGenome,trackedOffspring,trackedDescendants,deathDay,dominantGenome,toFile, true);
+                        });
+                    }
+                    else {
+                        dominantGenome.setVisible(false);
+                        toFile.setVisible(false);
+                    }
                 });
 
 
@@ -325,7 +441,23 @@ public class App extends Application {
             rightEngineThread.start();
                 startstop2.setOnAction((event2) -> {
                     rightEngine.switchPausing();
-                    this.mapPaused(periodicmap,(EvolutionEngine) rightEngine,periodicMap,trackedGenome2,trackedOffspring2,trackedDescendants2,deathDay2);
+                    if (((EvolutionEngine) rightEngine).pausing) {
+                        this.mapPaused(periodicmap,(EvolutionEngine) rightEngine,periodicMap,trackedGenome2,trackedOffspring2,trackedDescendants2,deathDay2,dominantGenome2,toFile2,false);
+                        toFile2.setOnAction((event3) -> {
+                            try {
+                                exportToFile(((EvolutionEngine) rightEngine).days,output2,outputSum2,"right");
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        });
+                        dominantGenome2.setOnAction((event3) -> {
+                            this.mapPaused(periodicmap,(EvolutionEngine) rightEngine,periodicMap,trackedGenome2,trackedOffspring2,trackedDescendants2,deathDay2,dominantGenome2,toFile2, true);
+                        });
+                    }
+                    else {
+                        dominantGenome2.setVisible(false);
+                        toFile2.setVisible(false);
+                    }
                 });
 
 
@@ -335,8 +467,8 @@ public class App extends Application {
             statBox2.setSpacing(10);
             mapWithWall.setAlignment(Pos.CENTER);
             periodicMap.setAlignment(Pos.CENTER);
-            VBox leftMap = new VBox(mapWithWall,startstop,statBox,lineChart);
-            VBox rightMap = new VBox(periodicMap,startstop2,statBox2,lineChart2);
+            VBox leftMap = new VBox(mapWithWall,startstop,magicRefillNotification,statBox,lineChart);
+            VBox rightMap = new VBox(periodicMap,startstop2,magicRefillNotification2,statBox2,lineChart2);
             leftMap.setAlignment(Pos.TOP_CENTER);
             rightMap.setAlignment(Pos.TOP_CENTER);
 
@@ -349,7 +481,7 @@ public class App extends Application {
 
             HBox box = new HBox(leftMap,rightMap,tracking);
             box.setAlignment(Pos.CENTER);
-            animation = new Scene(box, Math.max(mapwithwall.getWidth()*40+600,1000), periodicmap.getHeight()*20+500);
+            animation = new Scene(box, Math.max(mapwithwall.getWidth()*40+600,1100), periodicmap.getHeight()*20+500);
 
 
             window.setScene(animation);
