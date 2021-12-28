@@ -74,9 +74,9 @@ abstract class AbstractWorldMap implements IWorldMap,IPositionChangedObserver{
     }
 
     public Object objectAt(Vector2d position) {
-        if (!animals.get(position).isEmpty()){
+        if (!animals.get(position).isEmpty() && animals.get(position).size() > 0){
             ArrayList<Animal> animalsOnThisField = animals.get(position);
-//            animalsOnThisField.sort(compareByEnergy.reversed());
+            animalsOnThisField.sort(compareByEnergy.reversed());
             return animalsOnThisField.get(0);}
 
         else if (grasses.get(position) != null) return grasses.get(position);

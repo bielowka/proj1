@@ -12,12 +12,14 @@ import java.io.FileNotFoundException;
 public class GuiElementBox{
     int startEnergy;
     int size;
-    public GuiElementBox(IMapElement object, int startEnergy,int size) {
+    Image image;
+
+    public GuiElementBox(IMapElement object, int startEnergy,int size,Image image) {
         this.startEnergy = startEnergy;
         this.size = size;
+        this.image = image;
     }
     public VBox MakeBox(IMapElement object) throws FileNotFoundException{
-        Image image;
         if (object instanceof Animal){
             String suffix = "10";
             float enLvl = (float) (((Animal) object).getEnergy()) / (float) startEnergy * 10;

@@ -17,6 +17,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TextField;
+import javafx.scene.image.Image;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
@@ -37,6 +38,8 @@ public class App extends Application {
     Task<Void> task;
     Stage window;
     Scene inputs, animation;
+
+    Image image;
 
     GridPane mapWithWall = new GridPane();
     GridPane periodicMap = new GridPane();
@@ -150,7 +153,7 @@ public class App extends Application {
         for (int y = 0; y < map.getHeight(); y++)
             for (int x = 0; x < map.getWidth(); x++) {
                 if (map.objectAt(new Vector2d(x, y)) != null) {
-                    GuiElementBox Box = new GuiElementBox((IMapElement) map.objectAt(new Vector2d(x, y)),engine.getStartEnergy(),25);
+                    GuiElementBox Box = new GuiElementBox((IMapElement) map.objectAt(new Vector2d(x, y)),engine.getStartEnergy(),25,image);
                     VBox box = null;
                     try {
                         box = Box.MakeBox((IMapElement) map.objectAt(new Vector2d(x, y)));
@@ -192,10 +195,10 @@ public class App extends Application {
             for (int x = 0; x < map.getWidth(); x++) {
                 if (map.objectAt(new Vector2d(x, y)) != null) {
                     GuiElementBox Box;
-                    Box = new GuiElementBox((IMapElement) map.objectAt(new Vector2d(x, y)), engine.getStartEnergy(),25);
+                    Box = new GuiElementBox((IMapElement) map.objectAt(new Vector2d(x, y)), engine.getStartEnergy(),25,image);
                     if (show && map.objectAt(new Vector2d(x,y)) instanceof Animal){
                         if (engine.animalsWithDominantGenome().contains(((Animal) map.objectAt(new Vector2d(x, y))))){
-                            Box = new GuiElementBox((IMapElement) map.objectAt(new Vector2d(x, y)), engine.getStartEnergy(),60);
+                            Box = new GuiElementBox((IMapElement) map.objectAt(new Vector2d(x, y)), engine.getStartEnergy(),60,image);
                         }
                     }
                     VBox box = null;
@@ -240,7 +243,7 @@ public class App extends Application {
     }
 
     public void exportToFile(int day,ArrayList<String[]> thisOutput,int[] thisOutputSum,String side) throws IOException {
-        File csvOutputFile = new File(side + "engine_output_on_day_" + String.valueOf(day) + ".csv");
+        File csvOutputFile = new File("OUTPUTS/"+ side + "engine_output_on_day_" + String.valueOf(day) + ".csv");
         try (PrintWriter pw = new PrintWriter(csvOutputFile)) {
             thisOutput.stream()
                     .map(this::toCSV)
@@ -476,8 +479,8 @@ public class App extends Application {
             rightMap.setPrefWidth(periodicmap.getWidth()*30);
             leftMap.setMaxWidth(mapwithwall.getWidth()*25 + 40);
             rightMap.setMaxWidth(mapwithwall.getWidth()*25 + 40);
-            leftMap.setMinWidth(350);
-            rightMap.setMinWidth(350);
+            leftMap.setMinWidth(375);
+            rightMap.setMinWidth(375);
 
             HBox box = new HBox(leftMap,rightMap,tracking);
             box.setAlignment(Pos.CENTER);

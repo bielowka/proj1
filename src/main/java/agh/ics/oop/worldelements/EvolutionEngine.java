@@ -185,6 +185,7 @@ public class EvolutionEngine implements IEngine,Runnable{
         pausing = !pausing;
     }
 
+
     public synchronized void singleRun(int days) {
         Platform.runLater(() -> {
             simulationObserver.mapVisual(map,pane,this);
