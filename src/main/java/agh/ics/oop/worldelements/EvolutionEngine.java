@@ -52,7 +52,12 @@ public class EvolutionEngine implements IEngine,Runnable{
     protected List<Animal> animals = new ArrayList<Animal>();
     public int[] outputSum;
 
-    public EvolutionEngine(boolean isMagic, IWorldMap map, App simulationObserver, GridPane pane, int moveDelay, int startEnergy, int moveEnergy, int plantEnergy, int jungleRatio, int initAnimalsNumber, Label daysCount,Label genome, LineChart<String, Number> lineChart, XYChart.Series<String, Number> series, XYChart.Series<String, Number> grass,XYChart.Series<String, Number> avgLifetime,XYChart.Series<String,Number> avgEnergy, XYChart.Series<String,Number> avgOffspringNum,Label trackedGenome,Label trackedOffspring,Label trackedDescendants,Label deathDay,ArrayList<String[]> output,int[] outputSum,Label magicLabel){
+    public EvolutionEngine(boolean isMagic, IWorldMap map, App simulationObserver, GridPane pane,
+                           int moveDelay, int startEnergy, int moveEnergy, int plantEnergy, int jungleRatio, int initAnimalsNumber,
+                           Label daysCount,Label genome,
+                           LineChart<String, Number> lineChart, XYChart.Series<String, Number> series, XYChart.Series<String, Number> grass,XYChart.Series<String, Number> avgLifetime,XYChart.Series<String,Number> avgEnergy, XYChart.Series<String,Number> avgOffspringNum,
+                           Label trackedGenome,Label trackedOffspring,Label trackedDescendants,Label deathDay,
+                           ArrayList<String[]> output,int[] outputSum,Label magicLabel){
         this.map = map;
         this.simulationObserver = simulationObserver;
         this.pane = pane;

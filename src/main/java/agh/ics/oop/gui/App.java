@@ -22,10 +22,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Paint;
 import javafx.stage.Stage;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -33,13 +30,102 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.assertTrue;
 
-public class App extends Application {
+public class App extends Application{
 
     Task<Void> task;
     Stage window;
     Scene inputs, animation;
 
-    Image image;
+    Image imageAnDead;
+
+    {
+        try {
+            imageAnDead = new Image(new FileInputStream("src/main/resources/animal.png"));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    Image imageAn10;
+
+    {
+        try {
+            imageAn10 = new Image(new FileInputStream("src/main/resources/animal10.png"));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    Image imageAn20;
+
+    {
+        try {
+            imageAn20 = new Image(new FileInputStream("src/main/resources/animal20.png"));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    Image imageAn30;
+
+    {
+        try {
+            imageAn30 = new Image(new FileInputStream("src/main/resources/animal30.png"));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    Image imageAn40;
+
+    {
+        try {
+            imageAn40 = new Image(new FileInputStream("src/main/resources/animal40.png"));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    Image imageAn50;
+
+    {
+        try {
+            imageAn50 = new Image(new FileInputStream("src/main/resources/animal50.png"));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    Image imageAn60;
+
+    {
+        try {
+            imageAn60 = new Image(new FileInputStream("src/main/resources/animal60.png"));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    Image imageAn70;
+
+    {
+        try {
+            imageAn70 = new Image(new FileInputStream("src/main/resources/animal70.png"));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    Image grass;
+
+    {
+        try {
+            grass = new Image(new FileInputStream("src/main/resources/grass.png"));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     GridPane mapWithWall = new GridPane();
     GridPane periodicMap = new GridPane();
@@ -76,6 +162,7 @@ public class App extends Application {
 
     boolean show;
     boolean show2;
+
 
     public void outputUpdate(IWorldMap map, EvolutionEngine engine,ArrayList<String[]> output,int[] outputSum){
         String[] dailyOutput = {String.valueOf(engine.numOfAnimals()),String.valueOf(map.getNumOfGrasses()),String.valueOf(engine.avgEnergy()),String.valueOf(engine.getAvgLifeSpan()),String.valueOf(engine.avgOffspringNum())};
@@ -153,10 +240,30 @@ public class App extends Application {
         for (int y = 0; y < map.getHeight(); y++)
             for (int x = 0; x < map.getWidth(); x++) {
                 if (map.objectAt(new Vector2d(x, y)) != null) {
-                    GuiElementBox Box = new GuiElementBox((IMapElement) map.objectAt(new Vector2d(x, y)),engine.getStartEnergy(),25,image);
+                    GuiElementBox Box = new GuiElementBox(25,imageAn10);
+                    if (map.objectAt(new Vector2d(x, y)) instanceof Grass){
+                        Box = new GuiElementBox(25,grass);
+                    }
+                    if (map.objectAt(new Vector2d(x,y)) instanceof Animal){
+                        float enLvl = (float) ((((Animal) map.objectAt(new Vector2d(x,y))).getEnergy()) / (float) engine.getStartEnergy() * 10);
+                        int enLvlNorm = (int) enLvl;
+                        enLvlNorm = (enLvlNorm * 10) / 10;
+                        switch(enLvlNorm){
+                            default: {Box = new GuiElementBox(25,imageAnDead);break;}
+                            case 1: {Box = new GuiElementBox(25,imageAn10);break;}
+                            case 2: {Box = new GuiElementBox(25,imageAn20);break;}
+                            case 3: {Box = new GuiElementBox(25,imageAn30);break;}
+                            case 4: {Box = new GuiElementBox(25,imageAn40);break;}
+                            case 5: {Box = new GuiElementBox(25,imageAn50);break;}
+                            case 6: {Box = new GuiElementBox(25,imageAn60);break;}
+                            case 7: {Box = new GuiElementBox(25,imageAn70);break;}
+                        }
+                        if (enLvlNorm >= 7) Box = new GuiElementBox(25,imageAn70);
+                    }
+
                     VBox box = null;
                     try {
-                        box = Box.MakeBox((IMapElement) map.objectAt(new Vector2d(x, y)));
+                        box = Box.MakeBox();
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }
@@ -194,25 +301,41 @@ public class App extends Application {
         for (int y = 0; y < map.getHeight(); y++)
             for (int x = 0; x < map.getWidth(); x++) {
                 if (map.objectAt(new Vector2d(x, y)) != null) {
-                    GuiElementBox Box;
-                    Box = new GuiElementBox((IMapElement) map.objectAt(new Vector2d(x, y)), engine.getStartEnergy(),25,image);
-                    if (show && map.objectAt(new Vector2d(x,y)) instanceof Animal){
-                        if (engine.animalsWithDominantGenome().contains(((Animal) map.objectAt(new Vector2d(x, y))))){
-                            Box = new GuiElementBox((IMapElement) map.objectAt(new Vector2d(x, y)), engine.getStartEnergy(),60,image);
-                        }
+                    GuiElementBox Box = new GuiElementBox(25,imageAn10);
+                    if (map.objectAt(new Vector2d(x, y)) instanceof Grass){
+                        Box = new GuiElementBox(25,grass);
                     }
+                    int size = 25;
+                    if (map.objectAt(new Vector2d(x,y)) instanceof Animal){
+                        if (engine.animalsWithDominantGenome().contains(((Animal) map.objectAt(new Vector2d(x, y)))) && show) size = 60;
+                        float enLvl = (float) ((((Animal) map.objectAt(new Vector2d(x,y))).getEnergy()) / (float) engine.getStartEnergy() * 10);
+                        int enLvlNorm = (int) enLvl;
+                        enLvlNorm = (enLvlNorm * 10) / 10;
+                        switch(enLvlNorm){
+                            default: {Box = new GuiElementBox(25,imageAnDead);break;}
+                            case 1: {Box = new GuiElementBox(size,imageAn10);break;}
+                            case 2: {Box = new GuiElementBox(size,imageAn20);break;}
+                            case 3: {Box = new GuiElementBox(size,imageAn30);break;}
+                            case 4: {Box = new GuiElementBox(size,imageAn40);break;}
+                            case 5: {Box = new GuiElementBox(size,imageAn50);break;}
+                            case 6: {Box = new GuiElementBox(size,imageAn60);break;}
+                            case 7: {Box = new GuiElementBox(size,imageAn70);break;}
+                        }
+                        if (enLvlNorm >= 7) Box = new GuiElementBox(size,imageAn70);
+                    }
+
                     VBox box = null;
                     try {
-                        box = Box.MakeBox((IMapElement) map.objectAt(new Vector2d(x, y)));
+                        box = Box.MakeBox();
                     } catch (FileNotFoundException e) {
                         e.printStackTrace();
                     }
-
                     GridPane.setConstraints(box, x, y);
                     GridPane.setHalignment(box, HPos.CENTER);
                     pane.add(box, x, y);
                     final int posX = x;
                     final int posY = y;
+
                     box.setOnMouseEntered((event) -> {
                         if (map.objectAt(new Vector2d(posX,posY)) instanceof Animal) {
                             if (!engine.tracked) {
@@ -232,10 +355,9 @@ public class App extends Application {
                                 engine.setTrackedAnimalDescendants();
                         }
                     });
-
                 }
-
             }
+
     }
 
     public String toCSV(String[] output) {
@@ -260,7 +382,7 @@ public class App extends Application {
     }
 
 
-    public void start(Stage primaryStage) throws Exception { //DLA WPROWADZONYCH PARAMETROW DOPISAC WYJATKI, NP LICZBA ZWIERZAT NA POCZATKU < ILOSC POL NA MAPIE
+    public void start(Stage primaryStage) throws Exception {
 
         window = primaryStage;
 
